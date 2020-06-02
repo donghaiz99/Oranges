@@ -1,7 +1,7 @@
 const $ = new Env('京东618')
 $.VAL_url = $.getdata('chavy_url_jd816')
 $.VAL_body = $.getdata('chavy_body_jd816')
-$.VAL_headers = $.getdata('chavy_headers_jd816')
+$.VAL_headers = $.getdata('chavy_headers_jd816_2')
 
 !(async () => {
   $.log('', `🔔 ${$.name}, 开始!`, '')
