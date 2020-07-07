@@ -102,8 +102,8 @@ var shareCodes = [ // 这个列表填入你要助力的好友的shareCode
     '28f04226979142c0bb7228a558522193',//feng
     'd95d306a104e49ecbc6f3903071e3f09',//我的娃小朱朱
     'b7ebd5c3598f417b80368da005ff20e2',//laowang
-    'dfc523bd012149d4b47f2cd75452d6e6',//AlrenCheng
-    'dfc523bd012149d4b47f2cd75452d6e6'//dong
+    '',//AlrenCheng
+    ''//dong
 ]
 // 添加box功能
 // 【用box订阅的好处】
