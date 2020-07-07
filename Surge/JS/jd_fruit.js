@@ -102,7 +102,7 @@ var shareCodes = [ // 这个列表填入你要助力的好友的shareCode
     '28f04226979142c0bb7228a558522193',//feng
     'd95d306a104e49ecbc6f3903071e3f09',//我的娃小朱朱
     'b7ebd5c3598f417b80368da005ff20e2',//laowang
-    '',//AlrenCheng
+    'ba12775ed72a47909d3b1f844cb25234',//图图bandilives
     ''//dong
 ]
 // 添加box功能
