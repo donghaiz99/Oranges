@@ -28,7 +28,7 @@ var plantUuids = [ // 这个列表填入你要助力的好友的plantUuid
     'rxggow4kdwppaax5zbqhloiamdd2csr7fvl2xqy',//我的娃小朱朱
     'fn5sjpg5zdejmoxknyo5xetxwswkgy5ny777req',//laowang
     '4npkonnsy7xi2k62fqogk7iajgxtj4s27j2bruq',//我是AlrenCheng
-    '4npkonnsy7xi2yo2azj7tlvofjuncvjircgmovq'
+    '4npkonnsy7xi2vjujzlfocj73zz5c46u2um6r3a'
 ]
 let currentRoundId = null;//本期活动id
 let lastRoundId = null;//上期id
