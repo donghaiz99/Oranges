@@ -24,7 +24,7 @@ let shareCodes = [ // 这个列表填入你要助力的好友的shareCode, 最�
     'MTAxODc2NTEzMDAwMDAwMDAyNTg1MTkyNQ==',//feng
     'MTAxODc2NTE0NzAwMDAwMDAyODczNDYyNw==',//我的娃小朱朱
     'MTAxODc2NTE0NzAwMDAwMDAyOTI4OTIyMw==',//图图bandilives
-    '',
+    'MTAxODc2NTEzMzAwMDAwMDAyODc4ODYyNQ==',
 ]
 // 添加box功能
 // 【用box订阅的好处】
