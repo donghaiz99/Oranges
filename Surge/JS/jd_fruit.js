@@ -1,6 +1,7 @@
 /*
 东东水果:脚本更新地址 https://raw.githubusercontent.com/lxk0301/scripts/master/jd_fruit.js
-更新时间:2020-10-18
+更新时间:2020-10-26
+东东农场活动链接：https://h5.m.jd.com/babelDiy/Zeus/3KSjXqQabiTuD1cJ28QskrpWoBKT/index.html
 已支持IOS双京东账号,Node.js支持N个京东账号
 脚本兼容: QuantumultX, Surge, Loon, JSBox, Node.js
 // quantumultx
@@ -11,7 +12,7 @@
 [Script]
 cron "5 6-18/6 * * *" script-path=https://raw.githubusercontent.com/lxk0301/scripts/master/jd_fruit.js,tag=东东农场
 // Surge
-// 东东农场 = type=cron,cronexp="5 6-18/6 * * *",wake-system=1,timeout=120,script-path=https://raw.githubusercontent.com/lxk0301/scripts/master/jd_joy_steal.js
+// 东东农场 = type=cron,cronexp="5 6-18/6 * * *",wake-system=1,timeout=120,script-path=https://raw.githubusercontent.com/lxk0301/scripts/master/fruit.js
 互助码shareCode请先手动运行脚本查看打印可看到
 一天只能帮助4个人。多出的助力码无效
 注：如果使用Node.js, 需自行安装'crypto-js,got,http-server,tough-cookie'模块. 例: npm install crypto-js http-server tough-cookie got --save
@@ -23,7 +24,7 @@ let cookiesArr = [], cookie = '', jdFruitShareArr = [], isBox = false, notify, n
 //此此内容是IOS用户下载脚本到本地使用，填写互助码的地方，同一京东账号的好友互助码请使用@符号隔开。
 //下面给出两个账号的填写示例（iOS只支持2个京东账号）
 let shareCodes = [ // 这个列表填入你要助力的好友的shareCode
-   //账号一的好友shareCode,不同好友的shareCode中间用@符号隔开
+  //账号一的好友shareCode,不同好友的shareCode中间用@符号隔开
   '28f04226979142c0bb7228a558522193@d95d306a104e49ecbc6f3903071e3f09@b7ebd5c3598f417b80368da005ff20e2@ba12775ed72a47909d3b1f844cb25234@1d066b61c27b4a1da08b56b24b912c02',
   //账号二的好友shareCode,不同好友的shareCode中间用@符号隔开
   'dfc523bd012149d4b47f2cd75452d6e6',
@@ -238,13 +239,17 @@ async function predictionFruit() {
 //浇水十次
 async function doTenWater() {
   jdFruitBeanCard = $.getdata('jdFruitBeanCard') ? $.getdata('jdFruitBeanCard') : jdFruitBeanCard;
-  if ($.isNode() && process.env.jdFruitBeanCard) {
-    joyRunFlag = process.env.jdFruitBeanCard;
+  if ($.isNode() && process.env.FRUIT_BEAN_CARD) {
+    jdFruitBeanCard = process.env.FRUIT_BEAN_CARD;
   }
   await myCardInfoForFarm();
-
-  if (`${jdFruitBeanCard}` === 'true' && JSON.stringify($.myCardInfoRes).match(`限时翻倍`)) return
+  const { fastCard, doubleCard, beanCard, signCard  } = $.myCardInfoRes;
+  if (`${jdFruitBeanCard}` === 'true' && JSON.stringify($.myCardInfoRes).match(`限时翻倍`) && beanCard > 0) {
+    console.log(`您设置的是使用水滴换豆卡，且背包有水滴换豆卡${beanCard}张, 跳过10次浇水任务`)
+    return
+  }
   if ($.farmTask.totalWaterTaskInit.totalWaterTaskTimes < $.farmTask.totalWaterTaskInit.totalWaterTaskLimit) {
+    console.log(`\n准备浇水十次`);
     let waterCount = 0;
     isFruitFinished = false;
     for (; waterCount < $.farmTask.totalWaterTaskInit.totalWaterTaskLimit - $.farmTask.totalWaterTaskInit.totalWaterTaskTimes; waterCount++) {
@@ -338,8 +343,8 @@ async function doTenWaterAgain() {
     totalEnergy = $.farmInfo.farmUserPro.totalEnergy;
   }
   jdFruitBeanCard = $.getdata('jdFruitBeanCard') ? $.getdata('jdFruitBeanCard') : jdFruitBeanCard;
-  if ($.isNode() && process.env.jdFruitBeanCard) {
-    jdFruitBeanCard = process.env.jdFruitBeanCard;
+  if ($.isNode() && process.env.FRUIT_BEAN_CARD) {
+    jdFruitBeanCard = process.env.FRUIT_BEAN_CARD;
   }
   if (`${jdFruitBeanCard}` === 'true' && JSON.stringify($.myCardInfoRes).match('限时翻倍')) {
     console.log(`\n您设置的是水滴换豆功能,现在为您换豆`);
@@ -350,10 +355,10 @@ async function doTenWaterAgain() {
       if ($.userMyCardRes.code === '0') {
         message += `【水滴换豆卡】获得${$.userMyCardRes.beanCount}个京豆\n`;
       }
+      return
     } else {
-      console.log(`您目前水滴:${totalEnergy}g,水滴换豆卡${$.myCardInfoRes.beanCard}张,暂不满足水滴换豆的条件`)
+      console.log(`您目前水滴:${totalEnergy}g,水滴换豆卡${$.myCardInfoRes.beanCard}张,暂不满足水滴换豆的条件,为您继续浇水`)
     }
-    return
   }
   // if (Date.now() < new Date(activeEndTime).getTime()) {
   //   if (totalEnergy >= 100 && $.myCardInfoRes.beanCard > 0) {
@@ -547,7 +552,7 @@ async function turntableFarm() {
               if ($.lotteryRes.type.match(/bean/g) && $.lotteryRes.type.match(/bean/g)[0] === 'bean') {
                 lotteryResult += `${item.name}个，`;
               } else if ($.lotteryRes.type.match(/water/g) && $.lotteryRes.type.match(/water/g)[0] === 'water') {
-                lotteryResult += `${item.name}g，`;
+                lotteryResult += `${item.name}，`;
               } else {
                 lotteryResult += `${item.name}，`;
               }
@@ -1181,7 +1186,6 @@ async function waterFriendForFarm(shareCode) {
   $.waterFriendForFarmRes = await request('waterFriendForFarm', body);
 }
 async function showMsg() {
-  $.log(`\n${message}\n`);
   let ctrTemp;
   if ($.isNode() && process.env.FRUIT_NOTIFY_CONTROL) {
     ctrTemp = `${process.env.FRUIT_NOTIFY_CONTROL}` === 'false';
@@ -1190,16 +1194,13 @@ async function showMsg() {
   } else {
     ctrTemp = `${jdNotify}` === 'false';
   }
-  // jdNotify = `${notify.fruitNotifyControl}` === 'false' && `${jdNotify}` === 'false' && $.getdata('jdFruitNotify') === 'false';
   if (ctrTemp) {
     $.msg($.name, subTitle, message, option);
-    const notifyMessage = message.replace(/[\n\r]/g, '\n\n');
     if ($.isNode()) {
       await notify.sendNotify(`${$.name} - 账号${$.index} - ${UserName}`, `${subTitle}\n${message}`);
     }
-    // if ($.isNode()) {
-    //   await notify.BarkNotify(`${$.name}`, `${subTitle}\n${message}`);
-    // }
+  } else {
+    $.log(`\n${message}\n`);
   }
 }
 
@@ -1212,17 +1213,43 @@ function timeFormat(time) {
   }
   return date.getFullYear() + '-' + ((date.getMonth() + 1) >= 10 ? (date.getMonth() + 1) : '0' + (date.getMonth() + 1)) + '-' + (date.getDate() >= 10 ? date.getDate() : '0' + date.getDate());
 }
-function shareCodesFormat() {
+function readShareCode() {
   return new Promise(resolve => {
-    console.log(`第${$.index}个京东账号的助力码:::${jdFruitShareArr[$.index - 1]}`)
+    $.get({url: `http://api.turinglabs.net/api/v1/jd/farm/read/4/`}, (err, resp, data) => {
+      try {
+        if (err) {
+          console.log(`${JSON.stringify(err)}`)
+          console.log(`${$.name} API请求失败，请检查网路重试`)
+        } else {
+          if (data) {
+            console.log('随机取4个码')
+            data = JSON.parse(data);
+          }
+        }
+      } catch (e) {
+        $.logErr(e, resp)
+      } finally {
+        resolve(data);
+      }
+    })
+  })
+}
+function shareCodesFormat() {
+  return new Promise(async resolve => {
+    // console.log(`第${$.index}个京东账号的助力码:::${jdFruitShareArr[$.index - 1]}`)
+    newShareCodes = [];
     if (jdFruitShareArr[$.index - 1]) {
       newShareCodes = jdFruitShareArr[$.index - 1].split('@');
     } else {
-      console.log(`由于您未提供shareCode,将采纳本脚本自带的助力码\n`)
+      console.log(`由于您第${$.index}个京东账号未提供shareCode,将采纳本脚本自带的助力码\n`)
       const tempIndex = $.index > shareCodes.length ? (shareCodes.length - 1) : ($.index - 1);
       newShareCodes = shareCodes[tempIndex].split('@');
     }
-    console.log(`格式化后第${$.index}个京东账号的助力码${JSON.stringify(newShareCodes)}`)
+    const readShareCodeRes = await readShareCode();
+    if (readShareCodeRes && readShareCodeRes.code === 200) {
+      newShareCodes = newShareCodes.concat(readShareCodeRes.data || []);
+    }
+    console.log(`第${$.index}个京东账号将要助力的好友${JSON.stringify(newShareCodes)}`)
     resolve();
   })
 }
@@ -1283,8 +1310,9 @@ function requireConfig() {
         jdFruitShareArr.push(temp.join('@'));
       }
     }
-    console.log(`jdFruitShareArr::${JSON.stringify(jdFruitShareArr)}`)
-    console.log(`jdFruitShareArr账号长度::${jdFruitShareArr.length}`)
+    // console.log(`jdFruitShareArr::${JSON.stringify(jdFruitShareArr)}`)
+    // console.log(`jdFruitShareArr账号长度::${jdFruitShareArr.length}`)
+    console.log(`您提供了${jdFruitShareArr.length}个账号的农场助力码\n`);
     resolve()
   })
 }
