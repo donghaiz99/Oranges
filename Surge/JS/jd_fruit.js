@@ -1,21 +1,25 @@
 /*
 东东水果:脚本更新地址 https://raw.githubusercontent.com/lxk0301/scripts/master/jd_fruit.js
-更新时间:2020-10-26
+更新时间：2020-11-04
 东东农场活动链接：https://h5.m.jd.com/babelDiy/Zeus/3KSjXqQabiTuD1cJ28QskrpWoBKT/index.html
 已支持IOS双京东账号,Node.js支持N个京东账号
 脚本兼容: QuantumultX, Surge, Loon, JSBox, Node.js
-// quantumultx
+互助码shareCode请先手动运行脚本查看打印可看到
+一天只能帮助4个人。多出的助力码无效
+==========================Quantumultx=========================
 [task_local]
 #jd免费水果
 5 6-18/6 * * * https://raw.githubusercontent.com/lxk0301/scripts/master/jd_fruit.js, tag=东东农场, img-url=https://raw.githubusercontent.com/58xinian/icon/master/jdnc.png, enabled=true
-// Loon
+=========================Loon=============================
 [Script]
 cron "5 6-18/6 * * *" script-path=https://raw.githubusercontent.com/lxk0301/scripts/master/jd_fruit.js,tag=东东农场
-// Surge
-// 东东农场 = type=cron,cronexp="5 6-18/6 * * *",wake-system=1,timeout=120,script-path=https://raw.githubusercontent.com/lxk0301/scripts/master/fruit.js
-互助码shareCode请先手动运行脚本查看打印可看到
-一天只能帮助4个人。多出的助力码无效
-注：如果使用Node.js, 需自行安装'crypto-js,got,http-server,tough-cookie'模块. 例: npm install crypto-js http-server tough-cookie got --save
+
+=========================Surge============================
+东东农场 = type=cron,cronexp="5 6-18/6 * * *",wake-system=1,timeout=120,script-path=https://raw.githubusercontent.com/lxk0301/scripts/master/jd_fruit.js
+
+=========================小火箭===========================
+东东农场 = type=cron,script-path=https://raw.githubusercontent.com/lxk0301/scripts/master/jd_fruit.js, cronexpr="5 6-18/6 * * *", timeout=200, enable=true
+
 jd免费水果 搬的https://github.com/liuxiaoyucc/jd-helper/blob/a6f275d9785748014fc6cca821e58427162e9336/fruit/fruit.js
 */
 const $ = new Env('东东农场');
@@ -24,12 +28,12 @@ let cookiesArr = [], cookie = '', jdFruitShareArr = [], isBox = false, notify, n
 //此此内容是IOS用户下载脚本到本地使用，填写互助码的地方，同一京东账号的好友互助码请使用@符号隔开。
 //下面给出两个账号的填写示例（iOS只支持2个京东账号）
 let shareCodes = [ // 这个列表填入你要助力的好友的shareCode
-  //账号一的好友shareCode,不同好友的shareCode中间用@符号隔开
-  '28f04226979142c0bb7228a558522193@d95d306a104e49ecbc6f3903071e3f09@b7ebd5c3598f417b80368da005ff20e2@ba12775ed72a47909d3b1f844cb25234@1d066b61c27b4a1da08b56b24b912c02',
+   //账号一的好友shareCode,不同好友的shareCode中间用@符号隔开
+  'dfc523bd012149d4b47f2cd75452d6e6@966450e902ca4a00989b5d6e870f29c9@236714cba827497e80f76882c5ff2191@4e3bfa6ac6644e7cb9027b85dee3331d@0536170f6d534ec6beed1b3c9ef0acca',
   //账号二的好友shareCode,不同好友的shareCode中间用@符号隔开
-  'dfc523bd012149d4b47f2cd75452d6e6',
+  'dfc523bd012149d4b47f2cd75452d6e6@966450e902ca4a00989b5d6e870f29c9@236714cba827497e80f76882c5ff2191@4e3bfa6ac6644e7cb9027b85dee3331d@0536170f6d534ec6beed1b3c9ef0acca',
 ]
-let message = '', subTitle = '', option = {}, UserName = '', isFruitFinished = false;
+let message = '', subTitle = '', option = {}, isFruitFinished = false;
 const retainWater = 100;//保留水滴大于多少g,默认100g;
 let jdNotify = false;//是否关闭通知，false打开通知推送，true关闭通知推送
 let jdFruitBeanCard = false;//农场使用水滴换豆卡(如果出现限时活动时100g水换20豆,此时比浇水划算,推荐换豆),true表示换豆(不浇水),false表示不换豆(继续浇水),脚本默认是浇水
@@ -43,14 +47,24 @@ const JD_API_HOST = 'https://api.m.jd.com/client.action';
   for (let i = 0; i < cookiesArr.length; i++) {
     if (cookiesArr[i]) {
       cookie = cookiesArr[i];
-      UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
+      $.UserName = decodeURIComponent(cookie.match(/pt_pin=(.+?);/) && cookie.match(/pt_pin=(.+?);/)[1])
       $.index = i + 1;
-      console.log(`\n开始【京东账号${$.index}】${UserName}\n`);
+      $.isLogin = true;
+      $.nickName = '';
+      await TotalBean();
+      console.log(`\n开始【京东账号${$.index}】${$.nickName || $.UserName}\n`);
+      if (!$.isLogin) {
+        $.msg($.name, `【提示】cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取\nhttps://bean.m.jd.com/`, {"open-url": "https://bean.m.jd.com/"});
+        $.setdata('', `CookieJD${i ? i + 1 : "" }`);//cookie失效，故清空cookie。
+        if ($.isNode()) await notify.sendNotify(`${$.name}cookie已失效`, `京东账号${$.index} ${$.nickName || $.UserName}\n请重新登录获取cookie`);
+        continue
+      }
       message = '';
       subTitle = '';
       option = {};
       await shareCodesFormat();
       await jdFruit();
+      await showMsg();
     }
   }
 })()
@@ -65,7 +79,7 @@ async function jdFruit() {
   if ($.farmInfo.farmUserPro) {
     // option['media-url'] = $.farmInfo.farmUserPro.goodsImage;
     subTitle = `【水果名称】${$.farmInfo.farmUserPro.name}`;
-    message = `【京东账号${$.index}】${UserName}\n`;
+    message = `【京东账号${$.index}】${$.nickName}\n`;
     console.log(`\n【您的互助码shareCode】 ${$.farmInfo.farmUserPro.shareCode}\n`);
     console.log(`\n【已成功兑换水果】${$.farmInfo.farmUserPro.winTimes}次\n`);
     await masterHelpShare();//助力好友
@@ -73,7 +87,7 @@ async function jdFruit() {
       option['open-url'] = "openApp.jdMobile://";
       $.msg($.name, `【提醒⏰】${$.farmInfo.farmUserPro.name}已可领取`, '请去京东APP或微信小程序查看', option);
       if ($.isNode()) {
-        await notify.sendNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${UserName}\n${$.farmInfo.farmUserPro.name}已可领取`);
+        await notify.sendNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${$.nickName}\n${$.farmInfo.farmUserPro.name}已可领取`);
       }
       return
     } else if ($.farmInfo.treeState === 1){
@@ -83,7 +97,7 @@ async function jdFruit() {
       option['open-url'] = "openApp.jdMobile://";
       $.msg($.name, `【提醒⏰】请重新种植水果`, `上轮水果${$.farmInfo.farmUserPro.name}已兑换成功\n请去京东APP或微信小程序选购并种植新的水果\n`, option);
       if ($.isNode()) {
-        await notify.sendNotify(`${$.name}请重新种植水果`, `京东账号${$.index} ${UserName}\n上轮水果${$.farmInfo.farmUserPro.name}已兑换成功\n\n请去京东APP或微信小程序选购并种植新的水果`);
+        await notify.sendNotify(`${$.name}请重新种植水果`, `京东账号${$.index} ${$.nickName}\n上轮水果${$.farmInfo.farmUserPro.name}已兑换成功\n\n请去京东APP或微信小程序选购并种植新的水果`);
       }
       return
     }
@@ -95,25 +109,9 @@ async function jdFruit() {
     await duck();
     await doTenWaterAgain();//再次浇水
     await predictionFruit();//预测水果成熟时间
-    await showMsg();
   } else {
-    if ($.farmInfo.code === '3') {
-      $.msg($.name, '【提示】京东cookie已失效,请重新登录获取', 'https://bean.m.jd.com/', {"open-url": "https://bean.m.jd.com/"});
-      if ($.index === 1) {
-        $.setdata('', 'CookieJD');//cookie失效，故清空cookie。
-      } else if ($.index === 2){
-        $.setdata('', 'CookieJD2');//cookie失效，故清空cookie。
-      }
-      if ($.isNode()) {
-        await notify.sendNotify(`${$.name}cookie已失效`, `京东账号${$.index} ${UserName}\n请重新登录获取cookie`);
-      }
-      // if ($.isNode()) {
-      //   await notify.BarkNotify(`${$.name}cookie已失效`, `京东账号${$.index} ${UserName}\n请重新登录获取cookie`);
-      // }
-    } else {
-      console.log(`初始化农场数据异常, 请登录京东 app查看农场0元水果功能是否正常,农场初始化数据: ${JSON.stringify($.farmInfo)}`);
-      message = '初始化农场数据异常, 请登录京东 app查看农场0元水果功能是否正常'
-    }
+    console.log(`初始化农场数据异常, 请登录京东 app查看农场0元水果功能是否正常,农场初始化数据: ${JSON.stringify($.farmInfo)}`);
+    message = '初始化农场数据异常, 请登录京东 app查看农场0元水果功能是否正常'
   }
 }
 async function doDailyTask() {
@@ -279,11 +277,8 @@ async function doTenWater() {
       $.msg($.name, `【提醒⏰】${$.farmInfo.farmUserPro.name}已可领取`, '请去京东APP或微信小程序查看', option);
       $.done();
       if ($.isNode()) {
-        await notify.sendNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${UserName}\n${$.farmInfo.farmUserPro.name}已可领取`);
+        await notify.sendNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${$.nickName}\n${$.farmInfo.farmUserPro.name}已可领取`);
       }
-      // if ($.isNode()) {
-      //   await notify.BarkNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${UserName}\n${$.farmInfo.farmUserPro.name}已可领取`);
-      // }
     }
   } else {
     console.log('\n今日已完成10次浇水任务\n');
@@ -408,11 +403,8 @@ async function doTenWaterAgain() {
       $.msg($.name, `【提醒⏰】${$.farmInfo.farmUserPro.name}已可领取`, '请去京东APP或微信小程序查看', option);
       $.done();
       if ($.isNode()) {
-        await notify.sendNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${UserName}\n${$.farmInfo.farmUserPro.name}已可领取`);
+        await notify.sendNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${$.nickName}\n${$.farmInfo.farmUserPro.name}已可领取`);
       }
-      // if ($.isNode()) {
-      //   await notify.BarkNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${UserName}\n${$.farmInfo.farmUserPro.name}已可领取`);
-      // }
     }
   } else if (overageEnergy >= 10) {
     console.log("目前剩余水滴：【" + totalEnergy + "】g，可继续浇水");
@@ -439,11 +431,8 @@ async function doTenWaterAgain() {
       $.msg($.name, `【提醒⏰】${$.farmInfo.farmUserPro.name}已可领取`, '请去京东APP或微信小程序查看', option);
       $.done();
       if ($.isNode()) {
-        await notify.sendNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${UserName}\n${$.farmInfo.farmUserPro.name}已可领取`);
+        await notify.sendNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${$.nickName}\n${$.farmInfo.farmUserPro.name}已可领取`);
       }
-      // if ($.isNode()) {
-      //   await notify.BarkNotify(`${$.name}水果已可领取`, `京东账号${$.index} ${UserName}\n${$.farmInfo.farmUserPro.name}已可领取`);
-      // }
     }
   } else {
     console.log("目前剩余水滴：【" + totalEnergy + "】g,不再继续浇水,保留部分水滴用于完成第二天【十次浇水得水滴】任务")
@@ -593,7 +582,7 @@ async function getExtraAward() {
       }
     } else {
       console.log("助力好友未达到5个");
-      message += `【额外奖励】领取失败,原因：助力好友未达5个\n`;
+      message += `【额外奖励】领取失败,原因：给您助力的人未达5个\n`;
     }
     if ($.masterHelpResult.masterHelpPeoples && $.masterHelpResult.masterHelpPeoples.length > 0) {
       let str = '';
@@ -621,7 +610,7 @@ async function masterHelpShare() {
   console.log(`格式化后的助力码::${JSON.stringify(newShareCodes)}\n`);
 
   for (let code of newShareCodes) {
-    console.log(`开始助力京东账号${$.index} - ${UserName}的好友: ${code}`);
+    console.log(`开始助力京东账号${$.index} - ${$.nickName}的好友: ${code}`);
     if (!code) continue;
     if (code === $.farmInfo.farmUserPro.shareCode) {
       console.log('不能为自己助力哦，跳过自己的shareCode\n')
@@ -1197,7 +1186,7 @@ async function showMsg() {
   if (ctrTemp) {
     $.msg($.name, subTitle, message, option);
     if ($.isNode()) {
-      await notify.sendNotify(`${$.name} - 账号${$.index} - ${UserName}`, `${subTitle}\n${message}`);
+      await notify.sendNotify(`${$.name} - 账号${$.index} - ${$.nickName}`, `${subTitle}\n${message}`);
     }
   } else {
     $.log(`\n${message}\n`);
@@ -1314,6 +1303,46 @@ function requireConfig() {
     // console.log(`jdFruitShareArr账号长度::${jdFruitShareArr.length}`)
     console.log(`您提供了${jdFruitShareArr.length}个账号的农场助力码\n`);
     resolve()
+  })
+}
+function TotalBean() {
+  return new Promise(async resolve => {
+    const options = {
+      "url": `https://wq.jd.com/user/info/QueryJDUserInfo?sceneval=2`,
+      "headers": {
+        "Accept": "application/json,text/plain, */*",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "zh-cn",
+        "Connection": "keep-alive",
+        "Cookie": cookie,
+        "Referer": "https://wqs.jd.com/my/jingdou/my.shtml?sceneval=2",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1"
+      }
+    }
+    $.post(options, (err, resp, data) => {
+      try {
+        if (err) {
+          console.log(`${JSON.stringify(err)}`)
+          console.log(`${$.name} API请求失败，请检查网路重试`)
+        } else {
+          if (data) {
+            data = JSON.parse(data);
+            if (data['retcode'] === 13) {
+              $.isLogin = false; //cookie过期
+              return
+            }
+            $.nickName = data['base'].nickname;
+          } else {
+            console.log(`京东服务器返回空数据`)
+          }
+        }
+      } catch (e) {
+        $.logErr(e, resp)
+      } finally {
+        resolve();
+      }
+    })
   })
 }
 function request(function_id, body = {}, timeout = 1000){
